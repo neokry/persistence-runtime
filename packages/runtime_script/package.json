@@ -1,0 +1,27 @@
+{
+  "name": "runtime_script",
+  "version": "0.0.0",
+  "main": "dist/index.global.js",
+  "types": "dist/index.d.ts",
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "noExternal": [
+      "@ethersproject/strings"
+    ],
+    "format": [
+      "iife",
+      "esm"
+    ],
+    "splitting": true,
+    "treeshake": true,
+    "sourcemap": true,
+    "dts": true,
+    "minify": true,
+    "bundle": true
+  },
+  "scripts": {
+    "build": "rm -rf ./dist & tsup"
+  }
+}
