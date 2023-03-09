@@ -1,79 +1,47 @@
-import * as P5 from 'p5';
 import { Runtime } from 'runtime_script';
-import 'runtime_script';
+import * as _ from 'p5/global';
+var tokenId: string | undefined;
 
-const rt = (window as any).rt as Runtime;
+let input: any;
 
-console.log('rt', rt);
+const getRuntime = (): Runtime | undefined => {
+  return (window as any).rt;
+};
 
-const sketch = (p5: P5) => {
-  p5.setup = () => {
-    rt.init();
+const getCurrentToken = () => {
+  return typeof tokenId !== 'undefined' ? tokenId : '0';
+};
 
-    const canvas = p5.createCanvas(200, 200);
-    canvas.parent('app');
+function setup() {
+  const rt = getRuntime();
+  let currentToken = getCurrentToken();
 
-    p5.background('white');
+  input = createInput('');
+  input.position(5, 10);
+  input.size(100);
 
-    let inp = p5.createInput('');
-    inp.position(5, 10);
-    inp.size(100);
+  loadInitalData();
 
-    const initalValue = rt.getToken({ tokenId: '1' }).data;
-    console.log('initalValue', initalValue);
-    if (initalValue) inp.value(initalValue);
-
-    let button = p5.createButton('submit');
-    button.position(5, 35);
-    button.mousePressed(() => {
-      rt.mutateToken({
-        tokenId: '1',
-        data: inp.value(),
-      });
-
-      rt.commitToken({ tokenId: '1' });
+  let button = createButton('submit');
+  button.position(5, 35);
+  button.mousePressed(() => {
+    rt?.mutateToken({
+      tokenId: currentToken,
+      data: input.value(),
     });
-  };
-};
 
-const setInitalState = () => {
-  let pattern = {
-    beatButtons: [
-      [1, 0, 1, 0],
-      [0, 1, 0, 1],
-      [1, 0, 1, 0],
-      [0, 1, 1, 0],
-      [1, 1, 0, 0],
-      [0, 1, 0, 1],
-      [1, 0, 1, 0],
-    ],
-    sliders: [
-      [
-        [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
-        [0.1, 0.2, 0.4, 0.6, 0.7, 0.8, 0.9],
-      ],
-      [
-        [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
-        [0.4, 0.5, 0.6, 0.4, 0.7, 0.5, 0.6],
-      ],
-      [
-        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        [0.9, 0.8, 0.7, 0.6, 0.4, 0.3, 0.2],
-      ],
-      [
-        [0.4, 0.4, 0.4, 0.7, 0.7, 0.7, 0.2],
-        [0.2, 0.6, 0.2, 0.6, 0.8, 0.2, 0.3],
-      ],
-    ],
-    tempo: 400,
-  };
-
-  rt.mutateToken({
-    tokenId: '1',
-    data: pattern,
+    rt?.commitToken({ tokenId: currentToken });
   });
+}
 
-  rt.commitToken({ tokenId: '1' });
+const loadInitalData = async () => {
+  const rt = getRuntime();
+  await rt?.init();
+
+  let currentToken = getCurrentToken();
+
+  const initalValue = rt?.getToken({ tokenId: currentToken }).data;
+  if (initalValue) input.value(initalValue);
 };
 
-new P5(sketch);
+setup();

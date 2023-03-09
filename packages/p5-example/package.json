@@ -2,9 +2,17 @@
   "name": "p5-example",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "format": [
+      "iife"
+    ]
+  },
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "build": "rm -rf ./dist & tsup"
   },
   "dependencies": {
     "@types/p5": "^1.5.0",

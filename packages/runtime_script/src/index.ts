@@ -10,6 +10,7 @@ export type TokenResult = {
 export class Runtime {
   version: string = '0.0.1';
   dataSource: DataSource;
+  initialized = false;
 
   // TokenId -> TokenData
   values: {
@@ -21,28 +22,35 @@ export class Runtime {
     else this.dataSource = new RuntimeDataSource();
   }
 
-  init() {
+  async init({ parseJSON = true }: { parseJSON?: boolean }) {
+    this.initialized = true;
+
     const userData = this.dataSource.getUserData();
     if (!userData) return;
 
     const errors: Error[] = [];
     const tokenIds: string[] = [];
 
-    Object.keys(userData).map((tokenId) => {
-      try {
-        const rawData = userData[tokenId];
-        const decoded = this.decode(rawData);
-        this.mutateToken({ tokenId, data: JSON.parse(decoded) });
-        tokenIds.push(tokenId);
-      } catch (err: any) {
-        errors.push(err);
-      }
-    });
+    await Promise.all(
+      Object.keys(userData).map(async (tokenId) => {
+        try {
+          const rawData = userData[tokenId];
+          const decoded = await this.decode(rawData);
+          const parsed = parseJSON ? JSON.parse(decoded) : decoded;
+
+          this.mutateToken({ tokenId, data: parsed });
+          tokenIds.push(tokenId);
+        } catch (err: any) {
+          errors.push(err);
+        }
+      })
+    );
 
     return { tokenIds, errors };
   }
 
   getToken({ tokenId }: { tokenId?: string }): TokenResult {
+    if (!this.initialized) throw new Error('Runtime is not initialized');
     try {
       const tokenIdParsed = tokenId || (window as any).ps.tokenId;
       if (!tokenIdParsed) throw new Error('TokenId is required');
@@ -54,6 +62,7 @@ export class Runtime {
   }
 
   mutateToken({ tokenId, data }: { tokenId?: string; data: any }): TokenResult {
+    if (!this.initialized) throw new Error('Runtime is not initialized');
     try {
       const tokenIdParsed = tokenId || (window as any).ps.tokenId;
       if (!tokenIdParsed) throw new Error('TokenId is required');
@@ -64,20 +73,34 @@ export class Runtime {
     }
   }
 
-  commitToken({ tokenId }: { tokenId?: string }) {
+  commitToken({
+    tokenId,
+    encodeJSON,
+  }: {
+    tokenId?: string;
+    encodeJSON?: boolean;
+  }) {
+    if (!this.initialized) throw new Error('Runtime is not initialized');
     const tokenIdParsed = tokenId || (window as any).ps.tokenId;
 
     if (!tokenIdParsed) throw new Error('TokenId is required');
     const tokenData = this.values[tokenIdParsed];
 
-    console.log('pressed', tokenData);
-
-    const message = { tokenId: tokenIdParsed, data: JSON.stringify(tokenData) };
+    const message = {
+      tokenId: tokenIdParsed,
+      data: encodeJSON ? JSON.stringify(tokenData) : tokenData,
+    };
     this.dataSource.setUserData(message);
   }
 
   private decode(data: string) {
-    return atob(data);
+    return new Promise<string>((res, rej) => {
+      try {
+        res(atob(data));
+      } catch (err) {
+        rej(err);
+      }
+    });
   }
 }
 

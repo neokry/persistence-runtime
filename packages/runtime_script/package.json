@@ -1,7 +1,7 @@
 {
   "name": "runtime_script",
-  "version": "0.0.0",
-  "main": "dist/index.global.js",
+  "version": "0.1.2",
+  "main": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "tsup": {
     "entry": [
@@ -22,6 +22,7 @@
     "bundle": true
   },
   "scripts": {
-    "build": "rm -rf ./dist & tsup"
+    "build": "rm -rf ./dist & tsup",
+    "prepack": "yarn build"
   }
 }
