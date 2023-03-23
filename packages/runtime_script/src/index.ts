@@ -22,7 +22,8 @@ export class Runtime {
     else this.dataSource = new RuntimeDataSource();
   }
 
-  async init({ parseJSON = true }: { parseJSON?: boolean }) {
+  async init(props?: { parseJSON: boolean }) {
+    const { parseJSON } = props || { parseJSON: true };
     this.initialized = true;
 
     const userData = this.dataSource.getUserData();
@@ -36,7 +37,7 @@ export class Runtime {
         try {
           const rawData = userData[tokenId];
           const decoded = await this.decode(rawData);
-          const parsed = parseJSON ? JSON.parse(decoded) : decoded;
+          const parsed = parseJSON === true ? JSON.parse(decoded) : decoded;
 
           this.mutateToken({ tokenId, data: parsed });
           tokenIds.push(tokenId);
@@ -75,7 +76,7 @@ export class Runtime {
 
   commitToken({
     tokenId,
-    encodeJSON,
+    encodeJSON = true,
   }: {
     tokenId?: string;
     encodeJSON?: boolean;
